@@ -12,8 +12,16 @@ def input_int(question, min=None, max=None):
     `min` is an optional minimum and `max` is an optional maximum value. If unset, they will not be checked.
     '''
 
+    # Append minimum and maximum when applicable to the question string
+    if min is not None and max is not None:
+        question += f" (Enter an integer in the range {min}...{max})"
+    elif min is not None:
+        question += f" (Enter an integer greater than {min})"
+    elif max is not None:
+        question += f" (Enter an integer less than {max})"
+
     # Ask the question
-    check = input(f"\n{question} ({min}...{max})\n")
+    check = input(f"\n{question}\n")
     try:
         # Try casting check to integer
         int(check)
