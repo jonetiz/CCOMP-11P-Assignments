@@ -98,7 +98,7 @@ def concat_with_punctuation(l):
 def relativedelta_to_string(r, p=0):
     '''
     Converts a relativedelta into a string representation of "x years, y months, z days, y hours, i hours, j minutes, k seconds, and l microseconds".\n
-    `p` is the precision variable. p=0 (default) will return the delta down to microseconds, while 5 will return the delta down to days.\n
+    `p` is the precision variable. p=0 (default) will return the delta down to years, while 2 will return the delta down to days.\n
     Examples:\n
     `[years=+3,months=+5,days=+2]` => 3 years, 5 months, and 2 days\n
     `[months=+5,days=+2]` => 5 months and 2 days\n
@@ -127,41 +127,41 @@ def relativedelta_to_string(r, p=0):
         # If r has no years, months, and there is only one day, it must be tomorrow.
         return "tomorrow"
 
-    if abs(y) > 0 and p > 5:
+    if abs(y) > 0 and p >= 0:
         # If |y| > 0, add y year(s) to the list out.
         out.append(f"{abs(y)} year")
         out[-1] += "s" if abs(y) > 1 else ""
 
-    if abs(m) > 0 and p > 4:
+    if abs(m) > 0 and p >= 1:
         # If |m| > 0, add m month(s) to the list out.
         out.append(f"{abs(m)} month")
         out[-1] += "s" if abs(m) > 1 else ""
 
-    if abs(d) > 0 and p > 3:
+    if abs(d) > 0 and p >= 2:
         # If |d| > 0, add d day(s) to the list out.
         out.append(f"{abs(d)} day")
         out[-1] += "s" if abs(d) > 1 else ""
 
-    if abs(hh) > 0 and p > 2:
+    if abs(hh) > 0 and p >= 3:
         # If |hh| > 0, add hh hour(s) to the list out.
         out.append(f"{abs(hh)} hour")
         out[-1] += "s" if abs(hh) > 1 else ""
 
-    if abs(mm) > 0 and p > 1:
+    if abs(mm) > 0 and p >= 4:
         # If |mm| > 0, add mm minute(s) to the list out.
         out.append(f"{abs(mm)} minute")
         out[-1] += "s" if abs(mm) > 1 else ""
 
-    if abs(ss) > 0 and p > 0:
+    if abs(ss) > 0 and p >= 5:
         # If |ss| > 0, add ss second(s) to the list out.
         out.append(f"{abs(ss)} second")
         out[-1] += "s" if abs(ss) > 1 else ""
 
-    if abs(us) > 0 and p == 0:
+    if abs(us) > 0 and p >= 6:
         # If |us| > 0, add us microsecond(s) to the list out.
         out.append(f"{abs(us)} microsecond")
         out[-1] += "s" if abs(us) > 1 else ""
 
     # Pass the list out to concat_with_punctuation and return the concatenated list. If r is in the past, add " ago" to the end.
-    return f"{concat_with_punctuation(out)} ago" if y <= 0 and m <= 0 and d <= 0 else concat_with_punctuation(
+    return f"{concat_with_punctuation(out)} ago" if y <= 0 and m <= 0 and d <= 0 and p > 4 else concat_with_punctuation(
         out)

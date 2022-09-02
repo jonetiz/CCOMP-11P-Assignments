@@ -58,10 +58,10 @@ if delta.days <= 0 and delta.months <= 0 and delta.years <= 0:
         delta = relativedelta(date(today.year + 1, mob, dob), today)
 
 # Format delta as a user-friendly string.
-delta_formatted = relativedelta_to_string(delta, 5)
+delta_formatted = relativedelta_to_string(delta, 2)
 
 # Format delta_ago as a user-friendly string.
-delta_ago_formatted = relativedelta_to_string(delta_ago, 5)
+delta_ago_formatted = relativedelta_to_string(delta_ago, 2)
 
 # Print final result
 print(
