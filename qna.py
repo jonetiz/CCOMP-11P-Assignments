@@ -65,5 +65,5 @@ delta_ago_formatted = relativedelta_to_string(delta_ago, 5)
 
 # Print final result
 print(
-    f"\nYou were born {delta_ago_formatted}.\nYour {make_ordinal(age+1)} birthday is {'in ' if delta_formatted is not 'tomorrow' else ''}{delta_formatted}."
+    f"\nYou were born {delta_ago_formatted}.\nYour {make_ordinal(age+1)} birthday is {'in ' if delta_formatted != 'tomorrow' else ''}{delta_formatted}."
 )
