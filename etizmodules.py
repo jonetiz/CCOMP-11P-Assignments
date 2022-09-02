@@ -119,11 +119,11 @@ def relativedelta_to_string(r, p=0):
     us = r.microseconds
     out = []
 
-    if y == 0 and m == 0 and d == 0 and p > 4:
+    if y == 0 and m == 0 and d == 0 and p <= 2:
         # If r has no years, months, or days, it must be today.
         return "today"
 
-    if y == 0 and m == 0 and d == 1 and p > 4:
+    if y == 0 and m == 0 and d == 1 and p <= 2:
         # If r has no years, months, and there is only one day, it must be tomorrow.
         return "tomorrow"
 
@@ -163,5 +163,5 @@ def relativedelta_to_string(r, p=0):
         out[-1] += "s" if abs(us) > 1 else ""
 
     # Pass the list out to concat_with_punctuation and return the concatenated list. If r is in the past, add " ago" to the end.
-    return f"{concat_with_punctuation(out)} ago" if y <= 0 and m <= 0 and d <= 0 and p > 4 else concat_with_punctuation(
+    return f"{concat_with_punctuation(out)} ago" if y <= 0 and m <= 0 and d <= 0 and p <= 2 else concat_with_punctuation(
         out)
