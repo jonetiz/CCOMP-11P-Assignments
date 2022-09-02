@@ -3,6 +3,8 @@
 from dateutil.relativedelta import relativedelta
 
 # Get an integer based on user input and check that it is integer
+
+
 def input_int(question, min=None, max=None):
     '''
     Returns a user-inputted integer.\n
@@ -93,12 +95,36 @@ def concat_with_punctuation(l):
                 o += f"{str(s)}, "
         return o
 
+def concat_numbers_as_string(l):
+    '''
+    Returns a concatenated list as a single string with plus signs.\n
+    Examples:\n
+    `['a','b','c','d']` => a + b + c + d\n
+    `['a','b','c']` => a + b + c\n
+    `['a','b']` => a + b\n
+    `['a']` => a
+    '''
+    if len(l) == 1:
+        # If l is only one element long, return the element.
+        return f"{str(l[0])}"
+    else:
+        # If l is 2 or more elements long, return the concatenated list with + signs in between.
+        o = ""
+        for i, s in enumerate(l):
+            if i == len(l) - 1:
+                # If this iteration is the last element of l, just add the thing.
+                o += f"{str(s)}"
+            else:
+                # If this iteration is not the last element of l, add plus signs.
+                o += f"{str(s)} + "
+        return o
+
 
 # Takes a relativedelta and converts to a readable string.
 def relativedelta_to_string(r, p=0):
     '''
     Converts a relativedelta into a string representation of "x years, y months, z days, y hours, i hours, j minutes, k seconds, and l microseconds".\n
-    `p` is the precision variable. p=0 (default) will return the delta down to years, while 2 will return the delta down to days.\n
+    `p` is the precision variable. p=0 (default) will return the delta down to years, while 2 will return the delta down to days. Maxmimum value of p is 6.\n
     Examples:\n
     `[years=+3,months=+5,days=+2]` => 3 years, 5 months, and 2 days\n
     `[months=+5,days=+2]` => 5 months and 2 days\n
@@ -110,58 +136,73 @@ def relativedelta_to_string(r, p=0):
         return "Parameter r passed to relativedelta_to_string(r) is not a relativedelta."
 
     # Not applying absolute value here so we can check if r is in the past.
-    y = r.years
-    m = r.months
-    d = r.days
-    hh = r.hours
-    mm = r.minutes
-    ss = r.seconds
-    us = r.microseconds
+    d = [r.years, r.months, r.days, r.hours,
+         r.minutes, r.seconds, r.microseconds]
     out = []
 
-    if y == 0 and m == 0 and d == 0 and p <= 2:
+    if d[0] == 0 and d[1] == 0 and d[2] == 0 and p <= 2:
         # If r has no years, months, or days, it must be today.
         return "today"
 
-    if y == 0 and m == 0 and d == 1 and p <= 2:
+    if d[0] == 0 and d[1] == 0 and d[2] == 1 and p <= 2:
         # If r has no years, months, and there is only one day, it must be tomorrow.
         return "tomorrow"
 
-    if abs(y) > 0 and p >= 0:
-        # If |y| > 0, add y year(s) to the list out.
-        out.append(f"{abs(y)} year")
-        out[-1] += "s" if abs(y) > 1 else ""
+    for v in range(p+1):
+        if abs(d[v]) > 0:
+            out.append(f"{abs(d[v])} ")
+            if v == 0:
+                out[-1] += "year"
+            elif v == 1:
+                out[-1] += "month"
+            elif v == 2:
+                out[-1] += "day"
+            elif v == 3:
+                out[-1] += "hour"
+            elif v == 4:
+                out[-1] += "minute"
+            elif v == 5:
+                out[-1] += "second"
+            elif v == 6:
+                out[-1] += "microsecond"
 
-    if abs(m) > 0 and p >= 1:
-        # If |m| > 0, add m month(s) to the list out.
-        out.append(f"{abs(m)} month")
-        out[-1] += "s" if abs(m) > 1 else ""
+            out[-1] += "s" if abs(d[v]) > 1 else ""
 
-    if abs(d) > 0 and p >= 2:
-        # If |d| > 0, add d day(s) to the list out.
-        out.append(f"{abs(d)} day")
-        out[-1] += "s" if abs(d) > 1 else ""
+    # if abs(y) > 0 and p >= 0:
+    #     # If |y| > 0, add y year(s) to the list out.
+    #     out.append(f"{abs(y)} year")
+    #     out[-1] += "s" if abs(y) > 1 else ""
 
-    if abs(hh) > 0 and p >= 3:
-        # If |hh| > 0, add hh hour(s) to the list out.
-        out.append(f"{abs(hh)} hour")
-        out[-1] += "s" if abs(hh) > 1 else ""
+    # if abs(m) > 0 and p >= 1:
+    #     # If |m| > 0, add m month(s) to the list out.
+    #     out.append(f"{abs(m)} month")
+    #     out[-1] += "s" if abs(m) > 1 else ""
 
-    if abs(mm) > 0 and p >= 4:
-        # If |mm| > 0, add mm minute(s) to the list out.
-        out.append(f"{abs(mm)} minute")
-        out[-1] += "s" if abs(mm) > 1 else ""
+    # if abs(d) > 0 and p >= 2:
+    #     # If |d| > 0, add d day(s) to the list out.
+    #     out.append(f"{abs(d)} day")
+    #     out[-1] += "s" if abs(d) > 1 else ""
 
-    if abs(ss) > 0 and p >= 5:
-        # If |ss| > 0, add ss second(s) to the list out.
-        out.append(f"{abs(ss)} second")
-        out[-1] += "s" if abs(ss) > 1 else ""
+    # if abs(hh) > 0 and p >= 3:
+    #     # If |hh| > 0, add hh hour(s) to the list out.
+    #     out.append(f"{abs(hh)} hour")
+    #     out[-1] += "s" if abs(hh) > 1 else ""
 
-    if abs(us) > 0 and p >= 6:
-        # If |us| > 0, add us microsecond(s) to the list out.
-        out.append(f"{abs(us)} microsecond")
-        out[-1] += "s" if abs(us) > 1 else ""
+    # if abs(mm) > 0 and p >= 4:
+    #     # If |mm| > 0, add mm minute(s) to the list out.
+    #     out.append(f"{abs(mm)} minute")
+    #     out[-1] += "s" if abs(mm) > 1 else ""
+
+    # if abs(ss) > 0 and p >= 5:
+    #     # If |ss| > 0, add ss second(s) to the list out.
+    #     out.append(f"{abs(ss)} second")
+    #     out[-1] += "s" if abs(ss) > 1 else ""
+
+    # if abs(us) > 0 and p >= 6:
+    #     # If |us| > 0, add us microsecond(s) to the list out.
+    #     out.append(f"{abs(us)} microsecond")
+    #     out[-1] += "s" if abs(us) > 1 else ""
 
     # Pass the list out to concat_with_punctuation and return the concatenated list. If r is in the past, add " ago" to the end.
-    return f"{concat_with_punctuation(out)} ago" if y <= 0 and m <= 0 and d <= 0 and p <= 2 else concat_with_punctuation(
+    return f"{concat_with_punctuation(out)} ago" if d[0] <= 0 and d[1] <= 0 and d[2] <= 0 and p <= 2 else concat_with_punctuation(
         out)
