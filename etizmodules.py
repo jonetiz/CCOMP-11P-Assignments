@@ -16,9 +16,9 @@ def input_int(question, min=None, max=None):
     if min is not None and max is not None:
         question += f" (Enter an integer in the range {min}...{max})"
     elif min is not None:
-        question += f" (Enter an integer greater than {min})"
+        question += f" (Enter an integer equal to or greater than {min})"
     elif max is not None:
-        question += f" (Enter an integer less than {max})"
+        question += f" (Enter an integer equal to or less than {max})"
 
     # Ask the question
     check = input(f"\n{question}\n")
