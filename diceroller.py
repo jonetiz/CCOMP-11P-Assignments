@@ -15,12 +15,13 @@ from etizmodules import input_int
 import math
 
 num_dice = input_int("How many dice would you like to roll?", 1)
-dice_sides = input_int("How many sides do the dice have?", 1)
+dice_sides = input_int("How many sides do the dice have?", 1, 9999999)
 
 a = []
 
 for x in range(num_dice):
-    a.append(randint(1, dice_sides))
+    r = randint(1, dice_sides)
+    a.append(str(r).center(7))
 
 for t in a:
     o = f""" _ _ _ _ 
