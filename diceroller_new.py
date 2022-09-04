@@ -149,7 +149,8 @@ def draw():
     # Fill dice_display with white background
     dice_display.fill(WHITE)
     # Switch not implemented into python until 3.10; below is a rudimentary workaround that selects from the
-    # DICE dictionary based on current_die and runs the function in the second index.
+    # DICE dictionary based on current_die and runs the function in the second index. PS: I use Python 3.10
+    # so I really only did this for backwards compatibility so Joe could test it.
     DICE[current_die][2]()
     # Draw dice_display onto the screen
     screen.blit(dice_display, (200, 200))
@@ -191,7 +192,6 @@ def roll_die():
         screen.blit(rot_dd, rect.topleft)
         # Update display
         pygame.display.update()
-        print(a)
     else:
         # Switch die_rolling when for loop completes
         die_rolling = False
