@@ -216,14 +216,14 @@ while True:
         # Keybinds
         if event.type == pygame.KEYDOWN:
             # Cycle selected_die
-            if event.key == pygame.K_LEFT and not die_rolling:
+            if event.key == pygame.K_LEFT:
                 selected_die = selected_die - 1 if selected_die > 0 else 5
                 draw()
-            if event.key == pygame.K_RIGHT and not die_rolling:
+            if event.key == pygame.K_RIGHT:
                 selected_die = selected_die + 1 if selected_die < 5 else 0
                 draw()
             # Roll die
-            if event.key == pygame.K_SPACE and not die_rolling:
+            if event.key == pygame.K_SPACE:
                 die_rolling = True
                 current_die = selected_die
                 output = randint(1, DICE[current_die][1])
