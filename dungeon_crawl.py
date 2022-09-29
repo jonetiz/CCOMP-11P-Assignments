@@ -4,8 +4,11 @@
 
 # KEY OBJECTIVE: Procedurally Generated Rogue-lite Dungeon Crawler
 
+from etizmodules import input_int
 from dataclasses import dataclass
 from random import randrange
+from os import system
+from itertools import zip_longest
 
 # Base class for entities
 @dataclass
@@ -71,10 +74,13 @@ class Character(Entity):
     inventory: list[Item]
     stats: CharacterStatistics
     active_effects: list[Effect]
+    alive: bool
 
     def tick(self):
         for effect in self.active_effects:
             effect.do_effect(self)
+        if self.stats.hp <= 0:
+            self.alive = False
 
     # Simple check if this Character has an effect; returns the Effect object or False if it's not found.
     def has_effect(self, effect_name):
@@ -87,7 +93,7 @@ class Character(Entity):
     def use(self):
         # If the equipped item is a weapon, get a target and pass, else just use the consumable.
         if isinstance(self.equipped, Weapon):
-            self.get_target()
+            target = self.get_target()
             self.equipped.action(self, target)
         else:
             self.equipped.action(self)
@@ -96,8 +102,10 @@ class Character(Entity):
     def get_target(self, take_input = False):
         """Returns the Character object of the next available target; if self is the player character, it will prompt user for input. No input does auto-target."""
         if take_input:
-            # Get input from user for tager
+            # Get input from user for which target to use
+            pass
         else:
+            pass
             # Return the first available target
 
 # Item that modifies an instigator's CharacterStatistics
@@ -126,9 +134,11 @@ class Consumable(Item):
                 else:
                     instigator.active_effects.append(effect)
 
-
 @dataclass
 class Weapon(Item):
+    # The damage applied by the weapon
+    attack_damage: int
+
     # CharacterStatistics, representing what is needed (ie. needs 30 mana)
     required_stats: CharacterStatistics
 
@@ -138,7 +148,7 @@ class Weapon(Item):
     # Attack using this weapon
     def action(self, instigator: Character, target: Character):
         if self.can_attack(instigator):
-            target.stats.hp -= self.effective_value()
+            target.stats.hp -= self.attack_damage
             for effect in self.applied_effects:
                 cur_effect = target.has_effect(effect.name)
                 # Only add the effect if the target doesn't have it, else reset duration
@@ -157,27 +167,64 @@ class Weapon(Item):
                 for stat in stats:
                     if required_stat.name == stat.name and required_stat.value < stat.value:
                         return False
-                
 
+# Class for control-flow of gameplay; holds a text variable and options as Entities with methods for displaying the options
+@dataclass
+class ActionMenu:
+    text: str
+    options: list[Entity]
+
+    def display_menu(self):
+        _ = system('cls')
+        print(f"{self.text}")
+        out = ""
+        for i, j, k, l, m in zip_longest(range(len(self.options)), self.options[0::4], self.options[1::4], self.options[2::4], self.options[3::4]):
+            i *= 4
+            if j:
+                out += f"\n[{i+1}] {j.name}".ljust(20)
+            if k:
+                out += f"[{i+2}] {k.name}".ljust(20)
+            if l:
+                out += f"[{i+3}] {l.name}".ljust(20)
+            if m:
+                out += f"[{i+4}] {m.name}".ljust(20)
+        print(f"{out}")
+        selected_num = input_int("Select option from above:", 1, len(self.options))
+        try:
+            selection = self.options[selected_num - 1]
+        except: # input_int has error checking, but just in case something weird happens, don't let any out of range get through the cracks
+            print(f"{selected_num} is out of range!")
+            return self.options[0]
+        else:
+            return selection
+
+@dataclass
+class Room(Entity):
+    characters: list[Character]
+
+rooms = []
+
+@dataclass
+class MenuOption(Entity):
+    do_action: any
+    def action(self):
+        self.do_action()
+
+def generate_dungeon():
+    char_name = input("What is your name? ")
+    default_weapon = Weapon("Basic Sword", 10, 25, CharacterStatistics(0, 0, 0, 10))
+    default_inventory = [Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0)), Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0))]
+    main_character = Character(char_name, default_weapon, default_inventory, CharacterStatistics(100, 100, 25, 100), [])
+    entry_room = Room("Dungeon Entrance", [main_character])
 
 def main():
-    # generate_dungeon
-    # do stuff
-    test_effect = Effect("Test Effect", 5, CharacterStatistics(10, -10, 0, 0))
-    test_consumable = Consumable("Test Potion", 5, CharacterStatistics(1000, 0, 0, -50), [test_effect])
-    test_char = Character("Jon", None, None, CharacterStatistics(500, 500, 250, 100), [])
-    print(test_char)
-    test_consumable.action(test_char)
-    print(test_char)
-    while True:
-        asd = input("Test?\n")
-        if asd == "y":
-            test_char.tick()
-            print(test_char)
-        if asd == "n":
-            test_consumable.action(test_char)
-            test_char.tick()
-            print(test_char)
+    asd = ActionMenu("Main Menu", [
+        MenuOption("Begin Game", generate_dungeon),
+        MenuOption("Quit", quit)
+    ]
+    )
+    g = asd.display_menu()
+    g.action()
 
 # PEP 299 Adherence
 if __name__ == "__main__":
