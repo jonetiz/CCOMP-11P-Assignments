@@ -410,13 +410,13 @@ class Game:
 
     def room_has_enemies(self, room: Room):
         """Returns True if the room has characters other than the main character, else will return False"""
-        if room.characters:
+        if room.characters: # if the room has characters, copy the list so we can manipulate without saving to the original
             chars = room.characters.copy()
         else:
             return False
-        if self.main_character in chars:
+        if self.main_character in chars: # remove main character from the list of characters
             chars.remove(self.main_character)
-        if chars and len(chars) > 0:
+        if chars and len(chars) > 0: # if there are still characters after main character removed, return True
             return True
 
         return False
@@ -439,12 +439,12 @@ class Game:
                     "inventory": [i.toJSON() for i in self.main_character.inventory],
                     "stats": self.main_character.stats.toJSON(),
                     "effects": self.main_character.active_effects.toJSON() if self.main_character.active_effects else ""
-                }
-        #try:
-        with open('save.json', 'w+') as f: 
-            f.write(json.dumps(data))
-        #except:
-        #  print("Failed to save game!")
+                } # convert the character object to json
+        try:
+            with open('save.json', 'w+') as f: 
+                f.write(json.dumps(data))
+        except:
+            print("Failed to save game!")
         self.current_dungeon = None
         self.current_room = None
         self.game_state = 0
@@ -496,15 +496,15 @@ class Game:
 
     def search_room(self):
         """Loot from the room; open's room's inventory essentially same as inventory() method"""
-        self.combat_log = ""
+        self.combat_log = "" # blank out combat log
         searching = True
         while searching:
-            if self.current_room.items:
+            if self.current_room.items: # if there are items in the room, list them out as a menu
                 menu = ActionMenu(f"{self.status_string()}\nYou find the following items in the room.", self.current_room.items + [MenuOption("Go Back", print)])
                 item = menu.display_menu()
                 if isinstance(item, MenuOption):
                     return
-                imenu = ActionMenu(f"{self.status_string()}\nSelected item: {item}", 
+                imenu = ActionMenu(f"{self.status_string()}\nSelected item: {item}",  # submenu for a selected item
                     [
                     MenuOption("Pick Up", self.main_character.pickup_item),
                     MenuOption("Go Back", print)
@@ -514,7 +514,7 @@ class Game:
                 if isinstance(item, MenuOption):
                     continue
                 iaction.action(item)
-            else:
+            else: # if there are no items in the room, player finds nothing; only give option to go back.
                 menu = ActionMenu(f"{self.status_string()}\nYou found nothing in the room.", [MenuOption("Go Back", print)])
                 item = menu.display_menu()
                 if isinstance(item, MenuOption):
@@ -542,14 +542,18 @@ def main():
             try:
                 saved_character = ""
                 with open("save.json", 'r') as f:
-                    saved_character = json.load(f)
+                    saved_character = json.load(f) # load character from file
 
                     char_effects = []
-                    if saved_character['effects']:
-                        char_effects = [Effect(i['name'], i['total_duration'], CharacterStatistics(i['effect_per_turn']['hp'], i['effect_per_turn']['mana'], i['effect_per_turn']['armor'], i['effect_per_turn']['stamina'])) for i in saved_character['effects']]
+                    if saved_character['effects']: # if the saved character has effects, deserialize from json
+                        char_effects = [
+                            Effect(i['name'], i['total_duration'], CharacterStatistics(i['effect_per_turn']['hp'], i['effect_per_turn']['mana'], i['effect_per_turn']['armor'], i['effect_per_turn']['stamina']))
+                            for i in saved_character['effects']
+                        
+                        ]
                     
                     inventory = []
-                    for i in saved_character['inventory']:
+                    for i in saved_character['inventory']: # deserialize the character inventory and create the necessary Weapon or Consumable objects
                         i = json.loads(i)
                         if 'attack_damage' in i:
                             effects = []
@@ -577,7 +581,7 @@ def main():
                                 )
                             )
                     equipped = None
-                    for item in inventory:
+                    for item in inventory: # find the item in the inventory that matches the equipped item's serialized data (can't compare objects since it's serialized)
                         eq = json.loads(saved_character['equipped'])
                         if item.name == eq['name'] and item.weight == eq['weight'] and item.attack_damage == eq['attack_damage']:
                             equipped = item
@@ -592,13 +596,13 @@ def main():
             except:
                 print("Failed to read savefile (if it exists). Create new character!")
             
-            if not saved_character:
+            if not saved_character: # if there's no saved character, give them option to begin or quit
                 main_menu = ActionMenu("Main Menu", [
                     MenuOption("Begin Game", game.generate_dungeon),
                     MenuOption("Quit", quit)
                 ]
                 )
-            else:
+            else: # if there is a saved character, they can find a new dungeon, delete character, or quit
                 main_menu = ActionMenu("Main Menu", [
                     MenuOption("Find Dungeon", game.generate_dungeon),
                     MenuOption("New Character", game.delete_character),
