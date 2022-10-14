@@ -4,13 +4,13 @@
 
 # MIDTERM OBJECTIVE: Procedurally Generated Rogue-lite Dungeon Crawler
 
-from operator import invert
-from subprocess import STARTF_USESTDHANDLES
-from etizmodules import input_int # used to get and validate integer inputs
-from dataclasses import dataclass # used to reduce boilerplate code
-from random import randint, choice # random stuff
-from os import system # used for controlling stdout
-from itertools import zip_longest # used for extended zip() behavior
+import json  # used to save character
+from dataclasses import dataclass  # used to reduce boilerplate code
+from itertools import zip_longest  # used for extended zip() behavior
+from os import system  # used for controlling stdout
+from random import choice, randint  # random stuff
+
+from etizmodules import input_int  # used to get and validate integer inputs
 
 ROOM_NAMES = [ # A list of strings to be used as room names; move this out of file when
     "Hallway",
@@ -47,6 +47,9 @@ ENEMY_NAMES = [ # possible enemy names
 class Entity:
     name: str # Entity Name
 
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        
 # Data class for CharacterStatistics, things such as HP, Armor, Mana, and Stamina
 @dataclass
 class CharacterStatistics:
@@ -57,10 +60,11 @@ class CharacterStatistics:
     def __repr__(self):
         return f"{self.hp} HP, {self.mana} Mana, {self.armor} Armor, {self.stamina} Stamina"
 
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+    
 @dataclass
-class Effect:
-    # Name of the Effect
-    name: str
+class Effect(Entity):
 
     # The current duration
     duration = 0
@@ -340,9 +344,15 @@ class Dungeon:
             room = Room(choice(ROOM_NAMES), position) # create the room with a random name and the position generated above
             
             characters_in_room = [] # generate random characters in the room
-            if randint(0, 1): # 50/50 chance of a random enemy with random weapon being generated (need to flesh out for midterm)
-                sword = Weapon("Ramshackle Sword", 5, 10, CharacterStatistics(0, 0, 0, 10)) # create a weapon
-                char = Character(choice(ENEMY_NAMES), sword, [sword], CharacterStatistics(50, 0, 0, 100), current_room = room) # create character with random name and stuff
+            if randint(0, 1): # 50/50 chance of a random enemy with random weapon being generated
+                if randint(0, 1):
+                    sword = Weapon("Ramshackle Sword", 5, randint(5, 10), CharacterStatistics(0, 0, 0, 10)) # create a weapon that does 5-10 dmg
+                else:
+                    sword = Weapon("Basic Sword", 10, randint(10, 20), CharacterStatistics(0, 0, 0, 15)) # sword that does 10-20 dmg
+                inv = [sword] # put the sword in inventory
+                if randint(0, 1): # 50/50 chance of enemy having a basic potion for HP that can be picked up by player
+                    inv.append(Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0)))
+                char = Character(choice(ENEMY_NAMES), sword, inv, CharacterStatistics(50, 0, 0, 100), current_room = room) # create character with random name and stuff
                 characters_in_room.append(char) # add this character to characters_in_room
 
             room.characters = characters_in_room # set the room's characters to characters_in_room
@@ -358,7 +368,7 @@ class Dungeon:
 
             for j in self.rooms: # for each room
                 if j is not i: # only try to make connections on different rooms to prevent recursion; if this room is not the room we're trying to connect
-                    if abs(i.position[0] - j.position[0]) <= 1 or abs(i.position[1] - j.position[1]) <= 1: # if the position's x OR y are within 1 value, it's eligible for connection
+                    if i.position[0] == j.position[0] or i.position[1] == j.position[1]: # if the position's x OR y are within 1 value, it's eligible for connection
                         if con: # if there are connections, run a random check to see if a connection should be made
                             if randint(0, 1): # 50/50 chance of connection being made
                                 con.append(j)
@@ -386,12 +396,13 @@ class Game:
         """Returns a string in following format: RoomName | CharacterName, Level 1 | 100 HP, 100 Mana, 25 Armor, 100 Stamina"""
         return f"{self.current_room.name} | {self.main_character.name}, Level 1 | {self.main_character.stats}\n{self.combat_log}" # todo: implement character levels
 
-    def generate_dungeon(self): # generate the dungeon
-        char_name = input("What is your name? ") # ask user for character name
-        default_weapon = Weapon("Basic Sword", 10, 25, CharacterStatistics(0, 0, 0, 10)) # default weapon
-        default_inventory = [default_weapon, Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0)), Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0))] # default inventory is weapon and 2 potions
-        self.main_character = Character(char_name, default_inventory[0], default_inventory, CharacterStatistics(100, 100, 25, 100)) # create main character object
-        dungeon = Dungeon(choice(DUNGEON_NAMES), self.main_character, 5) # generate the dungeon
+    def generate_dungeon(self, dungeon_size = randint(5, 25)): # generate the dungeon
+        if not self.main_character: # if we don't already have a main character, create a new one
+            char_name = input("What is your name? ") # ask user for character name
+            default_weapon = Weapon("Basic Sword", 10, 25, CharacterStatistics(0, 0, 0, 10)) # default weapon
+            default_inventory = [default_weapon, Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0)), Consumable("Basic Potion", 2, CharacterStatistics(50, 0, 0, 0))] # default inventory is weapon and 2 potions
+            self.main_character = Character(char_name, default_inventory[0], default_inventory, CharacterStatistics(100, 100, 25, 100)) # create main character object
+        dungeon = Dungeon(choice(DUNGEON_NAMES), self.main_character, dungeon_size) # generate the dungeon
         self.current_dungeon = dungeon # set the current dungeon
         self.game_state = 1 # set gameplay mode thing
         self.current_room = dungeon.rooms[0] # set current room to the Entry Hall
@@ -409,6 +420,34 @@ class Game:
             return True
 
         return False
+
+    def delete_character(self):
+        """Clears save file and runs generate_dungeon"""
+        self.main_character = None
+        try:
+            with open('save.json', 'w+') as f:
+                f.write("") # truncate file
+        except:
+            print("Save file does not exist!")
+        self.generate_dungeon()
+
+    def exit_dungeon(self):
+        """Exits current dungeon, takes user to main menu, and saves the character."""
+        data = {
+                    "name": self.main_character.name,
+                    "equipped": self.main_character.equipped.toJSON(),
+                    "inventory": [i.toJSON() for i in self.main_character.inventory],
+                    "stats": self.main_character.stats.toJSON(),
+                    "effects": self.main_character.active_effects.toJSON() if self.main_character.active_effects else ""
+                }
+        #try:
+        with open('save.json', 'w+') as f: 
+            f.write(json.dumps(data))
+        #except:
+        #  print("Failed to save game!")
+        self.current_dungeon = None
+        self.current_room = None
+        self.game_state = 0
 
     def travel(self):
         """Travel menu and functionality"""
@@ -500,18 +539,80 @@ def main():
     game = Game() # new game object
     while True: # main loop
         if game.game_state == 0: # If user is in main menu
-            main_menu = ActionMenu("Main Menu", [
-                MenuOption("Begin Game", game.generate_dungeon),
-                MenuOption("Quit", quit)
-            ]
-            )
+            try:
+                saved_character = ""
+                with open("save.json", 'r') as f:
+                    saved_character = json.load(f)
+
+                    char_effects = []
+                    if saved_character['effects']:
+                        char_effects = [Effect(i['name'], i['total_duration'], CharacterStatistics(i['effect_per_turn']['hp'], i['effect_per_turn']['mana'], i['effect_per_turn']['armor'], i['effect_per_turn']['stamina'])) for i in saved_character['effects']]
+                    
+                    inventory = []
+                    for i in saved_character['inventory']:
+                        i = json.loads(i)
+                        if 'attack_damage' in i:
+                            effects = []
+                            if i['applied_effects']:
+                                effects = [Effect(j['name'], j['total_duration'], CharacterStatistics(j['effect_per_turn']['hp'], j['effect_per_turn']['mana'], j['effect_per_turn']['armor'], j['effect_per_turn']['stamina'])) for j in i['applied_effects']]
+                            inventory.append(
+                                Weapon(
+                                    i['name'],
+                                    i['weight'],
+                                    i['attack_damage'],
+                                    CharacterStatistics(i['required_stats']['hp'], i['required_stats']['mana'], i['required_stats']['armor'], i['required_stats']['stamina']),
+                                    effects
+                                )
+                            )
+                        else:
+                            effects = []
+                            if i['applied_effects']:
+                                effects = [Effect(i['name'], i['total_duration'], CharacterStatistics(i['effect_per_turn']['hp'], i['effect_per_turn']['mana'], i['effect_per_turn']['armor'], i['effect_per_turn']['stamina'])) for i in i['applied_effects']]
+                            inventory.append(
+                                Consumable(
+                                    i['name'],
+                                    i['weight'],
+                                    CharacterStatistics(i['affected_stats']['hp'], i['affected_stats']['mana'], i['affected_stats']['armor'], i['affected_stats']['stamina']),
+                                    effects
+                                )
+                            )
+                    equipped = None
+                    for item in inventory:
+                        eq = json.loads(saved_character['equipped'])
+                        if item.name == eq['name'] and item.weight == eq['weight'] and item.attack_damage == eq['attack_damage']:
+                            equipped = item
+                            break
+                    char_stats = json.loads(saved_character['stats'])
+                    game.main_character = Character(saved_character['name'], 
+                    equipped,
+                    inventory,
+                    CharacterStatistics(char_stats['hp'], char_stats['mana'], char_stats['armor'], char_stats['stamina']),
+                    char_effects
+                    ) # set the main character object 
+            except:
+                print("Failed to read savefile (if it exists). Create new character!")
+            
+            if not saved_character:
+                main_menu = ActionMenu("Main Menu", [
+                    MenuOption("Begin Game", game.generate_dungeon),
+                    MenuOption("Quit", quit)
+                ]
+                )
+            else:
+                main_menu = ActionMenu("Main Menu", [
+                    MenuOption("Find Dungeon", game.generate_dungeon),
+                    MenuOption("New Character", game.delete_character),
+                    MenuOption("Quit", quit)
+                ]
+                )
             option = main_menu.display_menu()
             option.action()
         if game.game_state == 1: # If user is out of combat
             action_menu = ActionMenu(f"{game.status_string()}", [
                 MenuOption("Travel", game.travel),
                 MenuOption("Inventory", game.inventory),
-                MenuOption("Search Room", game.search_room)
+                MenuOption("Search Room", game.search_room),
+                MenuOption("Exit Dungeon", game.exit_dungeon)
             ]
             )
             option = action_menu.display_menu()
@@ -526,6 +627,8 @@ def main():
             option.action()
             if not game.room_has_enemies(game.current_room): # if there are no enemies in the room, add to combat log that we're no longer in combat and set game.game_state = 1
                 game.combat_log += "\nYou are no longer in combat."
+                if game.main_character.stats.stamina < 100: # reset stamina to 100 if it's less than 100
+                    game.main_character.stats.stamina = 100
                 game.game_state = 1
             if not game.main_character.alive: # if MC dies, tell them they suck and quit program
                 print("You have perished.")
