@@ -3,7 +3,6 @@
 # Created on 03SEP2022
 
 from dataclasses import dataclass
-import this
 import pygame
 from pygame.locals import *
 
@@ -76,7 +75,7 @@ class Entity:
                 #     this.shape.vertices[vertex][1] = this.shape.vertices[vertex][1] - 0.01
         glEnd()
 
-        if self.position[1] > -3:
+        if self.position[1] > -5:
             self.position[1] = self.position[1] - 0.01
 
 
